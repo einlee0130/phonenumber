@@ -22,7 +22,7 @@ export default function Home() {
     const { data, error } = await supabase
       .from('contacts')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('phone', { ascending: true })
 
     if (error) {
       console.error(error)
