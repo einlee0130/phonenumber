@@ -9,6 +9,7 @@ export default function Home() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [memo, setMemo] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     getContacts()
@@ -60,6 +61,12 @@ export default function Home() {
   return (
     <main>
       <h1>📞 전화번호부</h1>
+      <input 
+        type="text"
+        placeholder="🔍 이름 또는 전화번호 검색"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
       <form onSubmit={addContact}>
         <input
@@ -89,7 +96,16 @@ export default function Home() {
       <hr />
 
       <section>
-        {contacts.map((contact) => (
+        {contacts
+          .filter((contact) => {
+            const keyword = search.toLowerCase()
+
+            return (
+              contact.name.toLowerCase().includes(keyword) ||
+              contact.phone.includes(keyword)
+            )
+          })
+  .map((contact) => (
           <div key={contact.id}>
             <h2>{contact.name}</h2>
             <p>{contact.phone}</p>
