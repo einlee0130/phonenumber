@@ -14,6 +14,20 @@ export default function Home() {
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
 
+  async function getContacts() {
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  setContacts(data)
+}
+
   useEffect(() => {
     getContacts()
   }, [])
