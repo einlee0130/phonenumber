@@ -546,3 +546,32 @@ button {
     transform: translateY(0);
   }
 }
+
+.name-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.favorite-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #d6d6d6;
+  font-size: 21px;
+  line-height: 1;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.favorite-button:hover {
+  color: #f5c542;
+  transform: scale(1.1);
+}
+
+.favorite-button.active {
+  color: #f5c542;
+}
+
+.favorite-button:active {
+  transform: scale(0.85);
+}

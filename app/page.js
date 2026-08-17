@@ -22,6 +22,7 @@ export default function Home() {
     const { data, error } = await supabase
       .from('contacts')
       .select('*')
+      .order('is_favorite', { ascending: false })
       .order('phone', { ascending: true })
 
     if (error) {
@@ -44,7 +45,6 @@ export default function Home() {
       return
     }
 
-    // 중복 전화번호 확인
     const { data: duplicate, error: duplicateError } = await supabase
       .from('contacts')
       .select('id')
@@ -57,7 +57,6 @@ export default function Home() {
       return
     }
 
-    // 수정 중인데 자기 자신인 경우는 허용
     if (duplicate && duplicate.id !== editingId) {
       alert('이미 등록된 전화번호입니다.')
       return
@@ -87,6 +86,7 @@ export default function Home() {
           name: cleanName,
           phone: cleanPhone,
           memo: cleanMemo || null,
+          is_favorite: false,
         })
 
       if (error) {
@@ -97,6 +97,23 @@ export default function Home() {
     }
 
     resetForm()
+    await getContacts()
+  }
+
+  async function toggleFavorite(contact) {
+    const { error } = await supabase
+      .from('contacts')
+      .update({
+        is_favorite: !contact.is_favorite,
+      })
+      .eq('id', contact.id)
+
+    if (error) {
+      console.error(error)
+      alert('즐겨찾기 변경에 실패했습니다.')
+      return
+    }
+
     await getContacts()
   }
 
@@ -197,9 +214,7 @@ export default function Home() {
           </div>
 
           <div className="input-group">
-            <label>
-              이름 / 기업명
-            </label>
+            <label>이름 / 기업명</label>
 
             <input
               type="text"
@@ -210,9 +225,7 @@ export default function Home() {
           </div>
 
           <div className="input-group">
-            <label>
-              전화번호
-            </label>
+            <label>전화번호</label>
 
             <input
               type="text"
@@ -236,10 +249,7 @@ export default function Home() {
           </div>
 
           <div className="form-buttons">
-            <button
-              type="submit"
-              className="save-button"
-            >
+            <button type="submit" className="save-button">
               {editingId ? '수정하기' : '저장하기'}
             </button>
 
@@ -300,9 +310,26 @@ export default function Home() {
               key={contact.id}
               className="contact-row"
             >
-              <span className="contact-name">
-                {contact.name}
-              </span>
+              <div className="name-area">
+                <button
+                  type="button"
+                  className={`favorite-button ${
+                    contact.is_favorite ? 'active' : ''
+                  }`}
+                  onClick={() => toggleFavorite(contact)}
+                  aria-label={
+                    contact.is_favorite
+                      ? '즐겨찾기 해제'
+                      : '즐겨찾기 추가'
+                  }
+                >
+                  {contact.is_favorite ? '★' : '☆'}
+                </button>
+
+                <span className="contact-name">
+                  {contact.name}
+                </span>
+              </div>
 
               <span className="contact-phone">
                 {contact.phone}
