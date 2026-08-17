@@ -18,19 +18,81 @@ export default function Home() {
     getContacts()
   }, [])
 
-  async function getContacts() {
-    const { data, error } = await supabase
+  async function saveContact(e) {
+  e.preventDefault()
+
+  const cleanName = name.trim()
+  const cleanPhone = phone.trim()
+  const cleanMemo = memo.trim()
+
+  if (!cleanName || !cleanPhone) {
+    alert('이름과 전화번호를 입력해주세요.')
+    return
+  }
+
+  // 중복 전화번호 확인
+  let duplicateQuery = supabase
+    .from('contacts')
+    .select('id, name, phone')
+    .eq('phone', cleanPhone)
+
+  // 수정 중이라면 현재 연락처는 중복 검사에서 제외
+  if (editingId) {
+    duplicateQuery = duplicateQuery.neq('id', editingId)
+  }
+
+  const { data: duplicate, error: duplicateError } =
+    await duplicateQuery
+
+  if (duplicateError) {
+    console.error(duplicateError)
+    alert('중복 전화번호를 확인하지 못했습니다.')
+    return
+  }
+
+  if (duplicate.length > 0) {
+    alert(
+      `이미 등록된 전화번호예요.\n\n${duplicate[0].name} · ${duplicate[0].phone}`
+    )
+    return
+  }
+
+  if (editingId) {
+    // 수정
+    const { error } = await supabase
       .from('contacts')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .update({
+        name: cleanName,
+        phone: cleanPhone,
+        memo: cleanMemo || null,
+      })
+      .eq('id', editingId)
 
     if (error) {
       console.error(error)
+      alert('수정에 실패했습니다.')
       return
     }
+  } else {
+    // 새 연락처 추가
+    const { error } = await supabase
+      .from('contacts')
+      .insert({
+        name: cleanName,
+        phone: cleanPhone,
+        memo: cleanMemo || null,
+      })
 
-    setContacts(data)
+    if (error) {
+      console.error(error)
+      alert('저장에 실패했습니다.')
+      return
+    }
   }
+
+  resetForm()
+  getContacts()
+}
 
   async function saveContact(e) {
     e.preventDefault()
@@ -218,6 +280,18 @@ export default function Home() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+
+        <div className="search-result-count">
+          {search ? (
+            <>
+              <strong>{filteredContacts.length}</strong>개의 검색 결과
+            </>
+          ) : (
+              <>
+                전체 <strong>{contacts.length}</strong>개
+              </>
+          )}
+        </div>
 
         {search && (
           <button onClick={() => setSearch('')}>×</button>
