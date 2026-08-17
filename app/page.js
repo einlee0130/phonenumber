@@ -1,87 +1,40 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
-export default function LoginPage() {
-  const router = useRouter()
+export default function Home() {
+  const [contacts, setContacts] = useState([])
 
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  useEffect(() => {
+    getContacts()
+  }, [])
 
-  async function handleLogin(e) {
-    e.preventDefault()
+  async function getContacts() {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-    if (!password) {
-      setError('비밀번호를 입력해주세요.')
+    if (error) {
+      console.error(error)
       return
     }
 
-    setLoading(true)
-    setError('')
-
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || '비밀번호가 틀렸습니다.')
-        setLoading(false)
-        return
-      }
-
-      router.push('/')
-      router.refresh()
-    } catch {
-      setError('로그인에 실패했습니다.')
-      setLoading(false)
-    }
+    setContacts(data)
   }
 
   return (
-    <main className="login-page">
-      <div className="login-box">
-        <div className="lock-icon">
-          🔒
+    <main>
+      <h1>📞 전화번호부</h1>
+
+      {contacts.map((contact) => (
+        <div key={contact.id}>
+          <h2>{contact.name}</h2>
+          <p>{contact.phone}</p>
+          {contact.memo && <p>{contact.memo}</p>}
         </div>
-
-        <p className="login-eyebrow">PRIVATE CONTACTS</p>
-
-        <h1>전화번호부</h1>
-
-        <p className="login-description">
-          비밀번호를 입력하면<br />
-          전화번호부에 들어갈 수 있어요.
-        </p>
-
-        <form onSubmit={handleLogin}>
-          <input
-            type="password"
-            placeholder="암호를 입력하세요"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoFocus
-          />
-
-          <button type="submit" disabled={loading}>
-            {loading ? '확인 중...' : '들어가기'}
-          </button>
-        </form>
-
-        {error && (
-          <p className="login-error">
-            {error}
-          </p>
-        )}
-      </div>
+      ))}
     </main>
   )
 }
